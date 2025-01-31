@@ -186,33 +186,31 @@ export default function Home() {
             offLabel={<IconMoon size={16} />}
           />
         </Group>
-        <ScrollArea>
-          <FileInput clearable multiple accept="image/*" placeholder="Upload Images" onChange={handleImageUpload} />
-          <Select
-            label="Font"
-            data={[
-              "Arial",
-              "Verdana",
-              "Times New Roman",
-              "Courier New",
-              "Georgia",
-              "Tahoma",
-            ]}
-            value={selectedFont}
-            onChange={setSelectedFont}
-          />
+        <FileInput clearable multiple accept="image/*" placeholder="Upload Images" onChange={handleImageUpload} />
+        <Select
+          label="Font"
+          data={[
+            "Arial",
+            "Verdana",
+            "Times New Roman",
+            "Courier New",
+            "Georgia",
+            "Tahoma",
+          ]}
+          value={selectedFont}
+          onChange={setSelectedFont}
+        />
 
-          <Select label="Resolution" data={["1920", "1080", "original"]} value={resolution} onChange={setResolution} />
-          <NumberInput label="Image Quality" min={50} max={100} value={imageQuality} onChange={setImageQuality} />
-          <Select label="Text Position" data={["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center"]} value={textPosition} onChange={setTextPosition} />
-          <NumberInput label="Font Size" min={10} max={150} value={fontSize} onChange={setFontSize} />
-          <ColorInput label="Text Color" value={textColor} onChange={setTextColor} />
-          <Checkbox label="Enable Outline" checked={showOutline} onChange={(e) => setShowOutline(e.currentTarget.checked)} />
-          <MultiSelect label="EXIF Data to Display" data={["camera", "date", "iso", "shutter", "aperture", "focal", "gps", "description"]} value={selectedExifFields} onChange={setSelectedExifFields} />
-          <Button fullWidth mt="md" color="green" onClick={downloadAllImages} disabled={images.length === 0}>
-            Download All as ZIP
-          </Button>
-        </ScrollArea>
+        <Select label="Resolution" data={["1920", "1080", "original"]} value={resolution} onChange={setResolution} />
+        <NumberInput label="Image Quality" min={50} max={100} value={imageQuality} onChange={setImageQuality} />
+        <Select label="Text Position" data={["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center"]} value={textPosition} onChange={setTextPosition} />
+        <NumberInput label="Font Size" min={10} max={150} value={fontSize} onChange={setFontSize} />
+        <ColorInput label="Text Color" value={textColor} onChange={setTextColor} />
+        <Checkbox label="Enable Outline" checked={showOutline} onChange={(e) => setShowOutline(e.currentTarget.checked)} />
+        <MultiSelect label="EXIF Data to Display" data={["camera", "date", "iso", "shutter", "aperture", "focal", "gps", "description"]} value={selectedExifFields} onChange={setSelectedExifFields} />
+        <Button fullWidth mt="md" color="green" onClick={downloadAllImages} disabled={images.length === 0}>
+          Download All as ZIP
+        </Button>
       </AppShell.Navbar>
 
       <AppShell.Main>
