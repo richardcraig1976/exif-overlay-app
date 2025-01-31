@@ -6,10 +6,14 @@ import { saveAs } from "file-saver";
 export default function Home() {
   const [images, setImages] = useState([]);
   const [resolution, setResolution] = useState(1920);
-  const [textPosition, setTextPosition] = useState("bottom-left");
+  const [textPosition, setTextPosition] = useState("top-left");
   const [fontSize, setFontSize] = useState(20);
   const [textColor, setTextColor] = useState("#FFFFFF");
   const [showOutline, setShowOutline] = useState(true);
+  const [selectedExifFields, setSelectedExifFields] = useState([
+    "camera", "date", "iso", "shutter", "aperture", "focal", "gps", "description"
+  ]); // Default: Show all fields
+
   const canvasRefs = useRef({});
 
   const handleImageUpload = async (event) => {
@@ -54,7 +58,7 @@ export default function Home() {
         drawImageWithText(image, canvasRefs.current[image.url]);
       }
     });
-  }, [images, resolution, textPosition, fontSize, textColor, showOutline]);
+  }, [images, resolution, textPosition, fontSize, textColor, showOutline, selectedExifFields]);
 
   const drawImageWithText = (image, canvas) => {
     const ctx = canvas.getContext("2d");
@@ -78,15 +82,19 @@ export default function Home() {
       ctx.strokeStyle = "black";
       ctx.lineWidth = 3;
 
-      const textLines = [
-        `Camera: ${image.exifData.camera}`,
-        `Date: ${image.exifData.date}`,
-        `ISO: ${image.exifData.iso}`,
-        `Shutter: ${image.exifData.shutter}`,
-        `Aperture: ${image.exifData.aperture}`,
-        `Focal Length: ${image.exifData.focal}`,
-        `Desc: ${image.exifData.description}`
-      ];
+      const allExifData = {
+        camera: `Camera: ${image.exifData.camera}`,
+        date: `Date: ${image.exifData.date}`,
+        iso: `ISO: ${image.exifData.iso}`,
+        shutter: `Shutter: ${image.exifData.shutter}`,
+        aperture: `Aperture: ${image.exifData.aperture}`,
+        focal: `Focal Length: ${image.exifData.focal}`,
+        gps: `GPS: ${image.exifData.gps}`,
+        description: `Description: ${image.exifData.description}`,
+      };
+
+      // Only show selected fields
+      const textLines = selectedExifFields.map(field => allExifData[field]);
 
       const padding = 20;
       let x, y;
@@ -110,7 +118,7 @@ export default function Home() {
           y = newHeight - (textLines.length * (fontSize + 5));
           break;
         case "bottom-center":
-          x = (newWidth - maxTextWidth) / 2; // Center the text horizontally
+          x = (newWidth - maxTextWidth) / 2;
           y = newHeight - (textLines.length * (fontSize + 5));
           break;
         default:
@@ -124,6 +132,8 @@ export default function Home() {
       });
     };
   };
+
+
 
   const downloadAllImages = async () => {
     const zip = new JSZip();
@@ -172,6 +182,29 @@ export default function Home() {
         <label> Outline: </label>
         <input type="checkbox" checked={showOutline} onChange={() => setShowOutline(!showOutline)} />
       </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <label >Select EXIF Data to Display:</label>
+        <select
+          multiple
+          value={selectedExifFields}
+          onChange={(e) => {
+            const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value);
+            setSelectedExifFields(selectedOptions);
+          }}
+          style={{ width: "200px", height: "130px", marginLeft: "10px" }}
+        >
+          <option value="camera">Camera Model</option>
+          <option value="date">Date Taken</option>
+          <option value="iso">ISO</option>
+          <option value="shutter">Shutter Speed</option>
+          <option value="aperture">Aperture</option>
+          <option value="focal">Focal Length</option>
+          <option value="gps">GPS Coordinates</option>
+          <option value="description">Description</option>
+        </select>
+      </div>
+
 
       <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ marginTop: "20px" }} />
 
