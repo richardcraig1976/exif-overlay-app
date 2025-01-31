@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { AppShell, Navbar, Select, MultiSelect, Button, ColorInput, Checkbox, NumberInput, FileInput, ScrollArea, Text } from "@mantine/core";
+import { AppShell, Navbar, Select, MultiSelect, Button, ColorInput, Checkbox, NumberInput, FileInput, ScrollArea, Switch, Group, useMantineColorScheme, Text } from "@mantine/core";
+import { IconSun, IconMoon } from "@tabler/icons-react";
 import ExifReader from "exifr";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
 export default function Home() {
+    const { colorScheme, setColorScheme } = useMantineColorScheme();
+    const dark = colorScheme === "dark";
+
     const [images, setImages] = useState([]);
     const [resolution, setResolution] = useState("1920");
     const [textPosition, setTextPosition] = useState("top-left");
@@ -14,10 +18,23 @@ export default function Home() {
     const [selectedExifFields, setSelectedExifFields] = useState(["camera", "date", "iso", "shutter", "aperture", "focal", "gps", "description"]);
     const canvasRefs = useRef({});
 
+    // Handle theme toggle
+    const toggleDarkMode = () => {
+        const newTheme = dark ? "light" : "dark";
+        setColorScheme(newTheme);
+        localStorage.setItem("theme", newTheme); // Persist theme preference
+    };
+
+    useEffect(() => {
+        const storedTheme = localStorage.getItem("theme");
+        if (storedTheme) {
+            setColorScheme(storedTheme);
+        }
+    }, []);
+
     const handleImageUpload = async (files) => {
         const imagePromises = Array.from(files).map(async (file) => {
             const url = URL.createObjectURL(file);
-
             let exifData = {};
             try {
                 const exif = await ExifReader.parse(file);
@@ -28,8 +45,8 @@ export default function Home() {
                     date: exif?.DateTimeOriginal || "N/A",
                     iso: exif?.ISO || "N/A",
                     shutter: exif?.ExposureTime ? `1/${Math.round(1 / exif.ExposureTime)}` : "N/A",
-                    aperture: exif?.FNumber ? `f/${exif.FNumber}` : "N/A",
-                    focal: exif?.FocalLength ? `${exif.FocalLength}mm` : "N/A",
+                    aperture: `f/${exif?.FNumber ?? "N/A"}`,
+                    focal: `${exif?.FocalLength ?? "N/A"}mm`,
                     gps: exif?.latitude && exif?.longitude ? `${exif.latitude}, ${exif.longitude}` : "N/A",
                     description: exif?.ImageDescription || "N/A",
                 };
@@ -71,7 +88,7 @@ export default function Home() {
 
             ctx.font = `${fontSize}px Arial`;
             ctx.fillStyle = textColor;
-            ctx.strokeStyle = "black";
+            ctx.strokeStyle = dark ? "#FFFFFF" : "#000000"; // Contrast in dark mode
             ctx.lineWidth = 3;
 
             const allExifData = {
@@ -113,37 +130,49 @@ export default function Home() {
     };
 
     const downloadAllImages = async () => {
-        const zip = new JSZip();
-        const folder = zip.folder("exif_images");
+      const zip = new JSZip();
+      const folder = zip.folder("exif_images");
 
-        for (const image of images) {
-            const canvas = canvasRefs.current[image.url];
-            const dataUrl = canvas.toDataURL("image/jpeg");
-            const blob = await fetch(dataUrl).then((res) => res.blob());
-            folder.file(`${image.file.name.replace(/\.[^/.]+$/, "")}_exif.jpg`, blob);
-        }
+      for (const image of images) {
+          const canvas = canvasRefs.current[image.url];
+          const dataUrl = canvas.toDataURL("image/jpeg");
+          const blob = await fetch(dataUrl).then((res) => res.blob());
+          folder.file(`${image.file.name.replace(/\.[^/.]+$/, "")}_exif.jpg`, blob);
+      }
 
-        zip.generateAsync({ type: "blob" }).then((content) => {
-            saveAs(content, "exif_images.zip");
-        });
-    };
+      zip.generateAsync({ type: "blob" }).then((content) => {
+          saveAs(content, "exif_images.zip");
+      });
+  };
 
     return (
         <AppShell navbar={{ width: 300 }}>
-                <AppShell.Navbar p="md">
-                        <FileInput clearable multiple accept="image/*" placeholder="Upload Images" onChange={handleImageUpload} />
-                        <Select label="Resolution" data={["1920", "1080", "original"]} value={resolution} onChange={setResolution} />
-                        <Select label="Text Position" data={["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center"]} value={textPosition} onChange={setTextPosition} />
-                        <NumberInput label="Font Size" min={10} max={150} value={fontSize} onChange={setFontSize} />
-                        <ColorInput label="Text Color" value={textColor} onChange={setTextColor} />
-                        <Checkbox label="Enable Outline" checked={showOutline} onChange={(e) => setShowOutline(e.currentTarget.checked)} />
-                        <MultiSelect label="EXIF Data to Display" data={["camera", "date", "iso", "shutter", "aperture", "focal", "gps"]} value={selectedExifFields} onChange={setSelectedExifFields} />
-                        <Button fullWidth mt="md" color="green" onClick={downloadAllImages} disabled={images.length === 0}>
-                            Download All as ZIP
-                        </Button>
-                </AppShell.Navbar>
-                <AppShell.Main>
-                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px", padding: "20px" }}>
+            <AppShell.Navbar p="md">
+                <Group position="apart">
+                    <Text size="lg" weight={500}>Settings</Text>
+                    <Switch
+                        checked={dark}
+                        onChange={toggleDarkMode}
+                        onLabel={<IconSun size={16} />}
+                        offLabel={<IconMoon size={16} />}
+                    />
+                </Group>
+                <ScrollArea>
+                    <FileInput clearable multiple accept="image/*" placeholder="Upload Images" onChange={handleImageUpload} />
+                    <Select label="Resolution" data={["1920", "1080", "original"]} value={resolution} onChange={setResolution} />
+                    <Select label="Text Position" data={["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center"]} value={textPosition} onChange={setTextPosition} />
+                    <NumberInput label="Font Size" min={10} max={150} value={fontSize} onChange={setFontSize} />
+                    <ColorInput label="Text Color" value={textColor} onChange={setTextColor} />
+                    <Checkbox label="Enable Outline" checked={showOutline} onChange={(e) => setShowOutline(e.currentTarget.checked)} />
+                    <MultiSelect label="EXIF Data to Display" data={["camera", "date", "iso", "shutter", "aperture", "focal", "gps", "description"]} value={selectedExifFields} onChange={setSelectedExifFields} />
+                    <Button fullWidth mt="md" color="green" onClick={downloadAllImages} disabled={images.length === 0}>
+                        Download All as ZIP
+                    </Button>
+                </ScrollArea>
+            </AppShell.Navbar>
+
+            <AppShell.Main>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px", padding: "20px" }}>
                     {images.map((image) => (
                         <div key={image.url} style={{ textAlign: "center" }}>
                             <canvas ref={(el) => (canvasRefs.current[image.url] = el)} style={{ maxWidth: "100%", border: "1px solid black" }} />
@@ -151,7 +180,7 @@ export default function Home() {
                         </div>
                     ))}
                 </div>
-                </AppShell.Main>
+            </AppShell.Main>
         </AppShell>
     );
 }
